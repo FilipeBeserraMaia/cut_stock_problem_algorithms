@@ -1,100 +1,125 @@
-import numpy as np
+from cut_stock import grasp
+
 from random import uniform
-import copy
+
+import numpy as np
 
 
-def best_improvment(initial_solution, cut_list, iter):
-    count = 0
+def best_improvment(initial_solution, limit, iter):
     best_solution = initial_solution
-    minimum_cost = get_cost(initial_solution)
+    minimum_cost = get_cost(initial_solution, limit)
 
     tabu = []
 
-    while count <= iter:
-        local_solutions = search(best_solution)
-        index = 0
-        permutation = local_solutions[index][-2:]
-
-        found = False
-        while not found:
-            if permutation not in tabu:
-                found = True
-                tabu.append(permutation)
-                solution = local_solutions[index][:-2]
-                cost = get_cost(solution)
-            else:
-                index += 1
-                best_solution = local_solutions[index]
-
-        count += 1
- 
-
-def search(curr_solution):
-    """
-    :return best_improved_solution
-    """
-    best_solution = curr_solution[:]
-    not_change = 10
-    changes = 0 
-    
-    while changes < not_change:
-    
-        changes +=1
-        
-    
-    return best_solution
-
-
-
-def shuffle_solution():
-    amt_trade = 1
-    bar_size = 12
-
-    s = [[1,1],[2,2],[3,3]]
-    s_or = copy.deepcopy(s)
-    c = get_cost(s_or, bar_size)
-    n_c = -1
     count = 0
+    while count <= iter:
+        local_solutions = search(best_solution, limit, iter)
 
-    while n_c <= c:
-        if count > 20000: break   
+        for solution in local_solutions:
+            if solution not in tabu:
+
+                current_cost = get_cost(solution, limit)
+                if current_cost[1] < minimum_cost[1] and current_cost[0] <= minimum_cost[0]:
+                    best_solution = solution
+                    minimum_cost = current_cost
+
+                    tabu.append(best_solution)
+                    break
+
+        if len(tabu) >= len(initial_solution):
+            tabu.pop(0)
         count += 1
-        s = permutation(s, bar_size)
-        n_c = get_cost(s, bar_size) 
 
-    
-def permutation(s, bar_size):
-    uni = lambda s: int(uniform(0, len(s)))
-        
-    b1 = uni(s)
-    p1 = uni(s[b1])
-    
-    b2 = uni(s)
-    p2 = uni(s[b2])
-
-    
-
-    if (sum(s[b1]) - s[b1][p1] + s[b2][p2]) <= bar_size and (sum(s[b2]) - s[b2][p2] + s[b1][p1]) <= bar_size:
-        aux = s[b1][p1]
-        s[b1][p1] = s[b2][p2]
-        s[b2][p2] = aux
+    return best_solution, minimum_cost
 
 
-    return s        
+def search(solution, bar_size, amt_trade=10):
+    cost = get_cost(solution, bar_size)
+    current_cost = (float('+inf'), float('+inf'))
 
-def valid_permutation(b1, p1, b2, p2):
-    pass
+    solutions = []
+    for _ in range(amt_trade):
+        count = 0
+        while not (current_cost[1] < cost[1] and current_cost[0] <= cost[0]):
 
-def get_cost(solution: list, limit: int) -> int:
-    sums = [sum(s) for s in solution]
-    rest = 0
-    for i in sums:
-        rest += (limit- i)
-    return  rest
+            if count > 1000:
+                return solutions
+
+            current_solution = permutation(solution, bar_size)
+            current_solution = fill_bar(current_solution, bar_size)
+            current_cost = get_cost(current_solution, bar_size)
+            count += 1
+
+        solutions.append(current_solution)
+
+    return solutions
+
+
+def fill_bar(solution, bar_size):
+    menor_barra = np.argmin((*map(lambda x: sum(x), solution),))
+    menor_barra = solution.pop(menor_barra)
+
+    for index, barra in enumerate(solution):
+        elements = []
+        for el in range(len(barra)):
+            if sum(menor_barra) + barra[el] <= bar_size:
+                elements.append(el)
+                menor_barra.append(barra[el])
+
+        if elements:
+            solution[index] = [*map(
+                lambda el: el[1],
+                filter(lambda e: e[0] not in elements, enumerate(solution[index]))), ]
+
+    solution.append(menor_barra)
+    return solution
+
+
+def permutation(solution, bar_size):
+    def uni(s): return int(uniform(0, len(s)))
+
+    b1 = uni(solution)
+    p1 = uni(solution[b1])
+
+    b2 = uni(solution)
+    p2 = uni(solution[b2])
+
+    if solution[b1] and solution[b2]:
+        if (sum(solution[b1]) - (solution[b1][p1]) + solution[b2][p2]) <= bar_size and (sum(solution[b2]) - solution[b2][p2] + solution[b1][p1]) <= bar_size:
+            aux = solution[b1][p1]
+            solution[b1][p1] = solution[b2][p2]
+            solution[b2][p2] = aux
+    else:
+        if solution[b1] and (sum(solution[b2]) + solution[b1][p1]) <= bar_size:
+            solution[b2].append(solution[b1][p1])
+        if solution[b2] and (sum(solution[b1]) + solution[b2][p2]) <= bar_size:
+            solution[b1].append(solution[b2][p2])
+
+    return solution
+
+
+def get_cost(solution: list, limitt: int) -> int:
+    sums = []
+    for s in solution:
+        rest = limitt - sum(s)
+        if s and (rest > 0):
+            sums.append(rest)
+
+    return sum(sums), len(sums)
+
 
 def main():
-    pass
+    np.random.seed(2)
+    cut_list = np.random.randint(low=40, high=50, size=12)
+    base_bar = 200
+
+    si = grasp(cut_list=cut_list, base_bar=base_bar)
+    print(f'{si}')
+    print(f'{get_cost(si, base_bar)=}')
+
+    result = search(si, base_bar, 100)
+    print(result)
 
 
 if __name__ == '__main__':
-    shuffle_solution()
+    main()

@@ -10,9 +10,9 @@ def calc_solution(solution, cut_value, base_bar):
     else:
         current_bar = 0
         solution = [[]]
-        
-    if  current_bar + cut_value <= base_bar:
-        solution[-1]+= [cut_value]
+
+    if current_bar + cut_value <= base_bar:
+        solution[-1] += [cut_value]
     else:
         solution.append([cut_value])
 
@@ -21,19 +21,15 @@ def calc_solution(solution, cut_value, base_bar):
 
 def grasp(cut_list=[], base_bar=0):
     ALPHA = 0.4
-    base_bar = 50
-    cut_list = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
-    cut_list = np.array(cut_list)
 
-    indexs = list(range(len(cut_list)))    
+    indexs = list(range(len(cut_list)))
     solution = []
 
     while indexs:
         rlc = []
-        maxim = max(cut_list[indexs], key=lambda x: x )
-        
-        minim = min(cut_list[indexs], key=lambda x: x )
-   
+        maxim = max(cut_list[indexs])
+        minim = min(cut_list[indexs])
+
         b = minim + ALPHA * (maxim - minim)
 
         for i in indexs:
@@ -50,6 +46,53 @@ def grasp(cut_list=[], base_bar=0):
         indexs.pop(indexs.index(selected_c))
 
     return solution
+
+
+def flips():
+    pass
+
+
+def tabu_search(first_solution, remainder_of_first_solution, dict_of_neighbours, iters, size):
+    count = 1
+    solution = first_solution
+    best_cost = remainder_of_first_solution
+    best_solution_ever = solution
+    tabu_list = list()
+
+    while count <= iters:
+        # return possibles solutions
+        flipados = flips(solution, dict_of_neighbours)
+        index_of_best_solution = 0
+        best_solution = flipados[index_of_best_solution]
+        best_cost_index = len(best_solution) - 1
+
+        found = False
+        while not found:
+            for i in range(len(best_solution)):
+                if best_solution[i] != solution[i]:
+                    first_exchange = best_solution[i]
+                    second_exchange = solution[i]
+                    break
+
+            # verifica se  a troca ja esta salva na lista tabu
+            if [first_exchange, second_exchange] not in tabu_list and [second_exchange, first_exchange] not in tabu_list:
+                found = True
+                tabu_list.append([first_exchange, second_exchange])
+                solution = best_solution[:-1]
+                cost = flipados[index_of_best_solution][best_cost_index]
+                if cost < best_cost:
+                    best_cost = cost
+                    best_solution_ever = solution
+            else:
+                index_of_best_solution = index_of_best_solution + 1
+                best_solution = flipados[index_of_best_solution]
+
+        if len(tabu_list) >= size:
+            tabu_list.pop(0)
+
+        count = count + 1
+
+    return best_solution_ever, best_cost
 
 
 def cut_stock(list_bars, size_base):
@@ -83,6 +126,7 @@ def save_cut(cut_list, bar_id, new_item):
 
     return cut_list
 
+
 def search_best_item(cut_list=[], rest=0):
     best_index = list(filter(lambda x: x[1] <= rest, enumerate(cut_list)))
 
@@ -90,15 +134,8 @@ def search_best_item(cut_list=[], rest=0):
 
 
 def main():
-    list_bars = [9, 2]
-    size_base = 10
-
-    print(sum(list_bars)/size_base)
-
-    s0 = cut_stock(list_bars, size_base)
-
-    print(s0)
+    pass
 
 
 if __name__ == '__main__':
-   print( grasp())
+    print()
