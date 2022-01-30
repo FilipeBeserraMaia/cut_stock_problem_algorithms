@@ -34,15 +34,35 @@ def bottom_up(items, size_bar):
     # items = [1,2,3,4,5,6]
 
     max_amt_bar = int(math.ceil(sum(items) / size_bar))
+    
     result_list = []
 
+    bars = [[size_bar, []] for i in range(max_amt_bar+1)]
+
     while len(items) > 0:
-        result = dynamic(items, size_bar)
-        result_list.append([items[i] for i in result['cuts']])
-        items = np.delete(items, result['cuts'])
+        local_results = []
+        best_local = 0
+        index = 0
         
-        print(result)
+        for i, bar in enumerate(bars):
+            local_results.append(dynamic(items, bar[0]))
+            
+            if local_results[-1]['value'] > best_local:
+                best_local = local_results[-1]['value']
+                index = i
+
+        # index = np.argmax(local_results, key=lambda x: x['value'])
+
+        print(local_results[index]['value'])
+        bars[index][0] -= local_results[index]['value']
+        bars[index][1] += local_results[index]['cuts']
+
+        result_list.append([items[i] for i in local_results[index]['cuts']])
+        items = np.delete(items, local_results[index]['cuts'])
+        print((items))
     print(result_list)
+    print('='*30)
+    # print(bars)
     print(len(result_list))
  
    
@@ -63,16 +83,15 @@ def read_instances(path):
         line = lines.split('\t')
         if len(line) > 1:
             cuts += [int(line[0])] * int(line[1])
-
     return cuts, size_bar, result
 
 
 if __name__ == '__main__':
     # main()
     
-    cuts, size_bar, result = read_instances('instancias/Solutionsfaceis/Schwerin1_BPP1.txt')
+    cuts, size_bar, result = read_instances('instancias/Solutionsfaceis/Schwerin1_BPP100.txt')
     print(len(cuts))
-    # print(sum(cuts))
-    cuts.sort()
-    bottom_up(cuts, size_bar)
-
+    print(cuts)
+    # # print(sum(cuts))
+    # cuts.sort()
+    # bottom_up(cuts, size_bar)
