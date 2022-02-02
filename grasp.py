@@ -1,3 +1,15 @@
+"""
+
+
+
+
+                    RETIRAR!!!!!!!!!!!!!!
+
+
+
+"""
+
+
 from random import randint, uniform
 import numpy as np
 import random
@@ -75,5 +87,6 @@ def main():
 
     print(new_matrix(len(v_w), len(v_w), max_weight, v_w))
 
+
 if __name__ == '__main__':
-    main()
+    pass

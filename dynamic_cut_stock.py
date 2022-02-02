@@ -28,10 +28,7 @@ def dynamic(items, size_bar):
     return matrix[-1][-1]
 
 
-
 def bottom_up(items, size_bar):
-    # size_bar = 10
-    # items = [1,2,3,4,5,6]
 
     max_amt_bar = int(math.ceil(sum(items) / size_bar))
     
@@ -51,33 +48,26 @@ def bottom_up(items, size_bar):
                 best_local = local_results[-1]['value']
                 index = i
 
-        # index = np.argmax(local_results, key=lambda x: x['value'])
 
-        print(local_results[index]['value'])
         bars[index][0] -= local_results[index]['value']
         bars[index][1] += local_results[index]['cuts']
 
         result_list.append([items[i] for i in local_results[index]['cuts']])
         items = np.delete(items, local_results[index]['cuts'])
-        print((items))
-    print(result_list)
-    print('='*30)
-    # print(bars)
-    print(len(result_list))
+
+    return result_list
  
-   
-    # for i in range(matrix.shape[2]):
-    #     print(matrix[-1][-1][i])
-    # return matrix[-1][-1][-1]
+
+
 
 def read_instances(path):
-    with open(path ,'r') as f:
+    with open(path, 'r') as f:
         data = f.read()
         data = data.split("\n")
 
     result = int(data.pop(0))
     size_bar = int(data.pop(0))
-    
+
     cuts = []
     for lines in data:
         line = lines.split('\t')
@@ -87,11 +77,7 @@ def read_instances(path):
 
 
 if __name__ == '__main__':
-    # main()
-    
     cuts, size_bar, result = read_instances('instancias/Solutionsfaceis/Schwerin1_BPP100.txt')
     print(len(cuts))
     print(cuts)
-    # # print(sum(cuts))
-    # cuts.sort()
-    # bottom_up(cuts, size_bar)
+    bottom_up(cuts, size_bar)

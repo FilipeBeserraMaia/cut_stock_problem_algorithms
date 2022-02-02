@@ -1,11 +1,39 @@
-from cut_stock import grasp
-
 from random import uniform
 
 import numpy as np
 
 
-def best_improvment(initial_solution, limit, iter):
+def grasp(cut_list=[], base_bar=0):
+    ALPHA = 0.4
+
+    indexs = list(range(len(cut_list)))
+    solution = []
+
+    while indexs:
+        rlc = []
+        maxim = max(cut_list[indexs])
+        minim = min(cut_list[indexs])
+
+        b = minim + ALPHA * (maxim - minim)
+
+        for i in indexs:
+            if (cut_list[i]) <= b:
+                rlc.append(i)
+
+        if rlc:
+            selected_c = uniform(0, len(rlc) - 1)
+            selected_c = rlc[int(selected_c)]
+        else:
+            break
+
+        solution = calc_solution(solution, cut_list[selected_c], base_bar)
+        indexs.pop(indexs.index(selected_c))
+
+    return solution
+
+
+def best_improvment(cut_list, limit, iter):
+    initial_solution = grasp(cut_list=cut_list, base_bar=limit)
     best_solution = initial_solution
     minimum_cost = get_cost(initial_solution, limit)
 
@@ -30,7 +58,7 @@ def best_improvment(initial_solution, limit, iter):
             tabu.pop(0)
         count += 1
 
-    return best_solution, minimum_cost
+    return best_solution
 
 
 def search(solution, bar_size, amt_trade=10):
@@ -53,6 +81,21 @@ def search(solution, bar_size, amt_trade=10):
         solutions.append(current_solution)
 
     return solutions
+
+
+def calc_solution(solution, cut_value, base_bar):
+    if solution:
+        current_bar = sum(solution[-1])
+    else:
+        current_bar = 0
+        solution = [[]]
+
+    if current_bar + cut_value <= base_bar:
+        solution[-1] += [cut_value]
+    else:
+        solution.append([cut_value])
+
+    return solution
 
 
 def fill_bar(solution, bar_size):
