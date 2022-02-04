@@ -1,4 +1,5 @@
 from random import uniform
+from copy import deepcopy
 
 import numpy as np
 
@@ -32,53 +33,63 @@ def grasp(cut_list=[], base_bar=0):
     return solution
 
 
-def best_improvment(cut_list, limit, iter):
-    initial_solution = grasp(cut_list=cut_list, base_bar=limit)
-    best_solution = initial_solution
-    minimum_cost = get_cost(initial_solution, limit)
+def best_improvment(cut_list, bar_size, unprovement_limit):
+    # minimum_cost = get_cost(initial_solution, limit)
+    # tabu = []
 
-    tabu = []
+    global_solution = (float('inf'), [])
+    times_not_improved = 0
+    new_solution = []
+    # gerar solução inicial até não melhorar considerando um limite de naomelhoria
+    while times_not_improved <= unprovement_limit:  # enquanto não parar de melhorar
+        new_solution = grasp(cut_list=cut_list, base_bar=bar_size)
+        local_solution = search(new_solution, bar_size)
 
-    count = 0
-    while count <= iter:
-        local_solutions = search(best_solution, limit, iter)
+        if len(local_solution) < global_solution[0]:  # caso melhore reseta se não incrementa
+            global_solution = (len(local_solution), local_solution)
+            times_not_improved = 0
+        else:
+            times_not_improved += 1
 
-        for solution in local_solutions:
-            if solution not in tabu:
-
-                current_cost = get_cost(solution, limit)
-                if current_cost[1] < minimum_cost[1] and current_cost[0] <= minimum_cost[0]:
-                    best_solution = solution
-                    minimum_cost = current_cost
-
-                    tabu.append(best_solution)
-                    break
-
-        if len(tabu) >= len(initial_solution):
-            tabu.pop(0)
-        count += 1
-
-    return best_solution
+    return global_solution
 
 
-def search(solution, bar_size, amt_trade=10):
+def search(solution, bar_size):
     cost = get_cost(solution, bar_size)
     current_cost = (float('+inf'), float('+inf'))
 
-    solutions = []
-    for _ in range(amt_trade):
-        count = 0
-        while not (current_cost[1] < cost[1] and current_cost[0] <= cost[0]):
+    for b in range(len(solution)):
+        bar = solution[b]
+        sub_solution = deepcopy(solution[b + 1:])
 
-            if count > 1000:
-                return solutions
+        for it in range(len(bar)):
+            item = bar[it]
 
-            current_solution = permutation(solution, bar_size)
-            current_solution = fill_bar(current_solution, bar_size)
-            current_cost = get_cost(current_solution, bar_size)
-            count += 1
+            for b_aux in range(len(sub_solution)):
+                if sum(sub_solution[b_aux]) + item <= bar_size:
+                    sub_solution[b_aux].append(item)
+                    break
+            else:
+                break
+        else:
+            solution = solution[:b] + sub_solution
+            break
 
-        solutions.append(current_solution)
+    return solution
+
+    # for _ in range(amt_trade):
+    #     count = 0
+    #     while not (current_cost[1] < cost[1] and current_cost[0] <= cost[0]):
+    #
+    #         if count > 1000:
+    #             return solutions
+    #
+    #         current_solution = permutation(solution, bar_size)
+    #         current_solution = fill_bar(current_solution, bar_size)
+    #         current_cost = get_cost(current_solution, bar_size)
+    #         count += 1
+    #
+    #     solutions.append(current_solution)
 
     return solutions
 
@@ -119,7 +130,8 @@ def fill_bar(solution, bar_size):
 
 
 def permutation(solution, bar_size):
-    def uni(s): return int(uniform(0, len(s)))
+    def uni(s):
+        return int(uniform(0, len(s)))
 
     b1 = uni(solution)
     p1 = uni(solution[b1])
@@ -128,7 +140,8 @@ def permutation(solution, bar_size):
     p2 = uni(solution[b2])
 
     if solution[b1] and solution[b2]:
-        if (sum(solution[b1]) - (solution[b1][p1]) + solution[b2][p2]) <= bar_size and (sum(solution[b2]) - solution[b2][p2] + solution[b1][p1]) <= bar_size:
+        if (sum(solution[b1]) - (solution[b1][p1]) + solution[b2][p2]) <= bar_size and (
+                sum(solution[b2]) - solution[b2][p2] + solution[b1][p1]) <= bar_size:
             aux = solution[b1][p1]
             solution[b1][p1] = solution[b2][p2]
             solution[b2][p2] = aux
@@ -154,13 +167,13 @@ def get_cost(solution: list, limitt: int) -> int:
 def main():
     np.random.seed(2)
     cut_list = np.random.randint(low=40, high=50, size=12)
-    base_bar = 200
+    base_bar = 100
 
-    si = grasp(cut_list=cut_list, base_bar=base_bar)
-    print(f'{si}')
-    print(f'{get_cost(si, base_bar)=}')
+    # si = grasp(cut_list=cut_list, base_bar=base_bar)
+    # print(f'{si}')
+    # print(f'{get_cost(si, base_bar)=}')
 
-    result = search(si, base_bar, 100)
+    result = best_improvment(cut_list, base_bar, 1000)
     print(result)
 
 

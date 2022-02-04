@@ -38,8 +38,7 @@ def custom_print(algoritmo, result, time):
 if __name__ == '__main__':
     cuts, size_bar, result = read_instances('instancias/Solutionsfaceis/Schwerin1_BPP100.txt')
     cuts = np.array(cuts)
-
-    pipeline('greddy', size_bar, cuts)
-    pipeline('grasp', cuts, size_bar)
+    # pipeline('dynamic', cuts, size_bar)
+    # pipeline('grasp', cuts, size_bar)
     pipeline('heuristic', cuts, size_bar, 100)
-    pipeline('dynamic', cuts, size_bar)
+    pipeline('greddy', size_bar, cuts)
